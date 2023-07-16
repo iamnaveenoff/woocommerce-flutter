@@ -69,5 +69,5 @@ class ApiService {
 
     return _performRequest(endpoint, 'POST', data: data);
   }
-
 }
+

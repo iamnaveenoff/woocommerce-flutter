@@ -1,73 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../api/api_service.dart';
-
-class SignupScreen extends StatefulWidget {
-  @override
-  _SignupScreenState createState() => _SignupScreenState();
-}
-
-class _SignupScreenState extends State<SignupScreen> {
-  TextEditingController _usernameController = TextEditingController();
-  TextEditingController _emailController = TextEditingController();
-  TextEditingController _passwordController = TextEditingController();
-  bool _showPassword = false;
-  bool _isLoading = false;
-
-  ApiService _apiService = ApiService();
-
-  void _togglePasswordVisibility() {
-    setState(() {
-      _showPassword = !_showPassword;
-    });
-  }
-
-  void _signup() {
-    String username = _usernameController.text.trim();
-    String email = _emailController.text.trim();
-    String password = _passwordController.text.trim();
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    _apiService.signup(username, email, password).then((response) {
-      setState(() {
-        _isLoading = false;
-      });
-
-      if (response['success']) {
-        Navigator.pushReplacementNamed(context, '/home');
-      } else {
-        String errorMessage = response['message'];
-        print('Signup Error: $errorMessage');
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: Text('Signup Error'),
-              content: Text(errorMessage),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: Text('OK'),
-                ),
-              ],
-            );
-          },
-        );
-      }
-    }).catchError((error) {
-      setState(() {
-        _isLoading = false;
-      });
-      print('Error occurred during signup: $error');
-    });
-  }
+import '../models/signup.dart';
+import '../providers/signup_provider.dart';
+class SignupScreen extends StatelessWidget {
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
+    final signupProvider = Provider.of<SignupProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Sign Up'),
@@ -94,21 +38,25 @@ class _SignupScreenState extends State<SignupScreen> {
               controller: _passwordController,
               decoration: InputDecoration(
                 labelText: 'Password',
-                suffixIcon: IconButton(
-                  onPressed: _togglePasswordVisibility,
-                  icon: Icon(
-                    _showPassword ? Icons.visibility_off : Icons.visibility,
-                  ),
-                ),
               ),
-              obscureText: !_showPassword,
+              obscureText: true,
             ),
             SizedBox(height: 24.0),
             ElevatedButton(
-              onPressed: _isLoading ? null : _signup,
-              child: _isLoading
-                  ? CircularProgressIndicator()
-                  : Text('Sign Up'),
+              onPressed: () {
+                final username = _usernameController.text.trim();
+                final email = _emailController.text.trim();
+                final password = _passwordController.text.trim();
+
+                final signupModel = SignupModel(
+                  username: username,
+                  email: email,
+                  password: password,
+                );
+
+                signupProvider.signup(signupModel);
+              },
+              child: Text('Sign Up'),
             ),
           ],
         ),

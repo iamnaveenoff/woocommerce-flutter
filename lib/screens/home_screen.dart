@@ -1,68 +1,37 @@
 import 'package:flutter/material.dart';
-import '../api/api_service.dart';
+import 'package:provider/provider.dart';
 
-class HomeScreen extends StatefulWidget {
-  @override
-  _HomeScreenState createState() => _HomeScreenState();
-}
+import '../models/products.dart';
+import '../providers/GetAllProducts_provider.dart';
 
-class _HomeScreenState extends State<HomeScreen> {
-  List<dynamic> products = [];
-  bool isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    fetchProducts();
-  }
-
-  Future<void> fetchProducts() async {
-    setState(() {
-      isLoading = true;
-    });
-
-    final response = await ApiService().getProducts();
-
-    setState(() {
-      isLoading = false;
-      if (response['success']) {
-        products = response['data'];
-      } else {
-        // Handle error case
-        print('Error fetching products: ${response['message']}');
-      }
-    });
-  }
-
+class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<GetAllProductsProvider>(context);
+    final List<ProductModel> products = provider.products;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Products'),
+        title: Text('Product App'),
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: products.length,
-              itemBuilder: (BuildContext context, int index) {
-                final product = products[index];
-                return ListTile(
-                  leading: Image.network(
-                    product['image'],
-                    width: 50,
-                    height: 50,
-                  ),
-                  title: Text(product['name']),
-                  subtitle: Text('Price: \$${product['price']}'),
-                  onTap: () {
-                    // Open the product link in a web browser or WebView
-                    // Replace with your preferred method of opening a URL
-                    // You may use packages like url_launcher or webview_flutter
-                    print('Opening product link: ${product['permalink']}');
-                  },
-                );
-              },
-            ),
+      body: ListView.builder(
+        itemCount: products.length,
+        itemBuilder: (context, index) {
+          final product = products[index];
+          return ListTile(
+            title: Text(product.productName),
+            subtitle: Text(product.shortDescription),
+            leading: Image.network(product.image),
+            trailing: Text(product.rate),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          provider.getAllProducts();
+        },
+        child: Icon(Icons.refresh),
+      ),
     );
   }
 }
